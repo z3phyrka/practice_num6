@@ -1,0 +1,761 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Онлайн-магазин{% endblock %}
+
+{% block content %}
+<div class="product-detail-page">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Главная</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('get_products') }}">Товары</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('get_products_by_category', category=product.category) }}">
+                {{ product.category }}
+            </a></li>
+            <li class="breadcrumb-item active">{{ product.name }}</li>
+        </ol>
+    </nav>
+    
+    <div class="row">
+        <!-- Изображение товара -->
+        <div class="col-lg-6">
+            <div class="product-images">
+                <div class="main-image mb-3">
+                    {% if product.image_url %}
+                    <img src="{{ product.image_url }}" 
+                         alt="{{ product.name }}" 
+                         class="img-fluid rounded" 
+                         id="main-product-image">
+                    {% else %}
+                    <div class="image-placeholder bg-light rounded d-flex align-items-center justify-content-center" 
+                         style="height: 400px;">
+                        <i class="fas fa-box fa-5x text-muted"></i>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Factory Pattern Demo -->
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white">
+                        <h6 class="mb-0">
+                            <i class="fas fa-industry"></i> Factory Pattern - Создание объектов
+                        </h6>
+                    </div>
+                    <div class="card-body">
+                        <p class="card-text small">
+                            Паттерн Factory используется для создания объектов товаров 
+                            без указания конкретного класса.
+                        </p>
+                        <button class="btn btn-sm btn-outline-secondary w-100" id="demo-factory-btn">
+                            <i class="fas fa-cogs"></i> Демо Factory Pattern
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Информация о товаре -->
+        <div class="col-lg-6">
+            <div class="product-info">
+                <h1 class="product-title mb-3">{{ product.name }}</h1>
+                
+                <div class="product-meta mb-4">
+                    <span class="badge bg-info me-2">{{ product.category }}</span>
+                    <span class="badge bg-secondary">Артикул: {{ product.sku or 'N/A' }}</span>
+                    <div class="rating mt-2">
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star text-warning"></i>
+                        <i class="fas fa-star-half-alt text-warning"></i>
+                        <span class="text-muted ms-2">(4.5/5.0)</span>
+                    </div>
+                </div>
+                
+                <div class="product-price mb-4">
+                    <h2 class="text-danger">{{ helpers.format_price(product.price, 'RUB') }}</h2>
+                    <small class="text-muted">без НДС</small>
+                </div>
+                
+                <div class="product-stock mb-4">
+                    {% if product.stock > 0 %}
+                    <span class="badge bg-success">
+                        <i class="fas fa-check"></i> В наличии: {{ product.stock }} шт.
+                    </span>
+                    {% else %}
+                    <span class="badge bg-danger">
+                        <i class="fas fa-times"></i> Нет в наличии
+                    </span>
+                    {% endif %}
+                </div>
+                
+                <div class="product-description mb-4">
+                    <h5>Описание</h5>
+                    <p>{{ product.description or 'Нет описания' }}</p>
+                </div>
+                
+                <!-- Добавление в корзину -->
+                <div class="add-to-cart mb-4">
+                    <form id="add-to-cart-form" class="row g-3">
+                        <div class="col-auto">
+                            <label for="quantity" class="col-form-label">Количество:</label>
+                        </div>
+                        <div class="col-auto">
+                            <input type="number" 
+                                   class="form-control" 
+                                   id="quantity" 
+                                   name="quantity" 
+                                   value="1" 
+                                   min="1" 
+                                   max="{{ product.stock }}"
+                                   {% if product.stock <= 0 %}disabled{% endif %}>
+                        </div>
+                        <div class="col-auto">
+                            <button type="submit" 
+                                    class="btn btn-primary btn-lg"
+                                    id="add-to-cart-btn"
+                                    {% if product.stock <= 0 %}disabled{% endif %}>
+                                <i class="fas fa-cart-plus"></i> Добавить в корзину
+                            </button>
+                        </div>
+                    </form>
+                    
+                    <!-- Strategy Pattern Demo -->
+                    <div class="mt-3">
+                        <small class="text-muted d-block">
+                            <i class="fas fa-lightbulb"></i>
+                            Strategy Pattern: Выбор способа добавления в корзину
+                        </small>
+                        <div class="btn-group btn-group-sm mt-2" role="group">
+                            <button type="button" class="btn btn-outline-secondary active" data-strategy="standard">
+                                Стандартное
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-strategy="express">
+                                Экспресс
+                            </button>
+                            <button type="button" class="btn btn-outline-secondary" data-strategy="gift">
+                                Подарочное
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Характеристики -->
+                <div class="product-specs mb-4">
+                    <h5>Характеристики</h5>
+                    <table class="table table-sm">
+                        <tr>
+                            <th width="40%">Категория:</th>
+                            <td>{{ product.category }}</td>
+                        </tr>
+                        <tr>
+                            <th>Артикул:</th>
+                            <td>{{ product.sku or 'N/A' }}</td>
+                        </tr>
+                        <tr>
+                            <th>На складе:</th>
+                            <td>{{ product.stock }} шт.</td>
+                        </tr>
+                        <tr>
+                            <th>Дата добавления:</th>
+                            <td>{{ product.created_at.strftime('%d.%m.%Y') }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Дополнительная информация -->
+    <div class="row mt-5">
+        <div class="col-12">
+            <ul class="nav nav-tabs" id="productTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="details-tab" data-bs-toggle="tab" data-bs-target="#details">
+                        <i class="fas fa-info-circle"></i> Подробное описание
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs">
+                        <i class="fas fa-list-alt"></i> Характеристики
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews">
+                        <i class="fas fa-comments"></i> Отзывы
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="singleton-tab" data-bs-toggle="tab" data-bs-target="#singleton">
+                        <i class="fas fa-database"></i> Singleton Pattern Demo
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content p-3 border border-top-0 rounded-bottom" id="productTabsContent">
+                <div class="tab-pane fade show active" id="details" role="tabpanel">
+                    <h5>Подробное описание</h5>
+                    <p>{{ product.description or 'Нет подробного описания.' }}</p>
+                    <p>Это демонстрационный товар для показа архитектурных паттернов в системе электронной коммерции.</p>
+                </div>
+                
+                <div class="tab-pane fade" id="specs" role="tabpanel">
+                    <h5>Технические характеристики</h5>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Вес:</th>
+                                    <td>1.5 кг</td>
+                                </tr>
+                                <tr>
+                                    <th>Размеры:</th>
+                                    <td>30 × 20 × 15 см</td>
+                                </tr>
+                                <tr>
+                                    <th>Материал:</th>
+                                    <td>Пластик, металл</td>
+                                </tr>
+                            </table>
+                        </div>
+                        <div class="col-md-6">
+                            <table class="table table-sm">
+                                <tr>
+                                    <th>Цвет:</th>
+                                    <td>Черный</td>
+                                </tr>
+                                <tr>
+                                    <th>Гарантия:</th>
+                                    <td>12 месяцев</td>
+                                </tr>
+                                <tr>
+                                    <th>Производитель:</th>
+                                    <td>Demo Inc.</td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="reviews" role="tabpanel">
+                    <h5>Отзывы покупателей</h5>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Система отзывов демонстрирует работу паттернов Observer и Facade
+                    </div>
+                    
+                    <!-- Form для добавления отзыва -->
+                    <div class="card mb-3">
+                        <div class="card-body">
+                            <h6>Оставить отзыв</h6>
+                            <form id="review-form">
+                                <div class="mb-3">
+                                    <label class="form-label">Оценка:</label>
+                                    <div class="rating-input">
+                                        <i class="far fa-star" data-rating="1"></i>
+                                        <i class="far fa-star" data-rating="2"></i>
+                                        <i class="far fa-star" data-rating="3"></i>
+                                        <i class="far fa-star" data-rating="4"></i>
+                                        <i class="far fa-star" data-rating="5"></i>
+                                    </div>
+                                    <input type="hidden" id="rating-value" value="0">
+                                </div>
+                                <div class="mb-3">
+                                    <textarea class="form-control" id="review-text" rows="3" 
+                                              placeholder="Ваш отзыв..."></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-paper-plane"></i> Отправить отзыв
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Список отзывов -->
+                    <div class="reviews-list">
+                        <div class="review-item mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between">
+                                <strong>Иван Петров</strong>
+                                <small class="text-muted">2 дня назад</small>
+                            </div>
+                            <div class="rating">
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="far fa-star text-warning"></i>
+                            </div>
+                            <p class="mt-2 mb-0">Отличный товар! Соответствует описанию.</p>
+                        </div>
+                        
+                        <div class="review-item mb-3 p-3 border rounded">
+                            <div class="d-flex justify-content-between">
+                                <strong>Мария Сидорова</strong>
+                                <small class="text-muted">1 неделю назад</small>
+                            </div>
+                            <div class="rating">
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                                <i class="fas fa-star text-warning"></i>
+                            </div>
+                            <p class="mt-2 mb-0">Лучшее соотношение цены и качества!</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-pane fade" id="singleton" role="tabpanel">
+                    <h5>Singleton Pattern Demo</h5>
+                    <p class="card-text">
+                        Паттерн Singleton гарантирует, что у класса есть только один экземпляр,
+                        и предоставляет глобальную точку доступа к нему.
+                    </p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>Демонстрация Singleton</h6>
+                                    <p>Нажмите кнопку, чтобы создать/получить Singleton</p>
+                                    <button class="btn btn-info" id="demo-singleton-btn">
+                                        <i class="fas fa-database"></i> Получить Database Singleton
+                                    </button>
+                                    <div class="mt-3">
+                                        <pre id="singleton-output" class="bg-light p-2 rounded"></pre>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h6>Особенности Singleton</h6>
+                                    <ul>
+                                        <li>Один экземпляр на все приложение</li>
+                                        <li>Глобальная точка доступа</li>
+                                        <li>Ленивая инициализация</li>
+                                        <li>Потокобезопасность (опционально)</li>
+                                    </ul>
+                                    <small class="text-muted">
+                                        В этом проекте Singleton используется для:
+                                        <ul class="mt-1">
+                                            <li>Подключения к базе данных</li>
+                                            <li>Конфигурации приложения</li>
+                                            <li>Кэширования</li>
+                                        </ul>
+                                    </small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Похожие товары -->
+    <div class="similar-products mt-5">
+        <h3 class="mb-4">Похожие товары</h3>
+        <div class="row">
+            {% for similar_product in similar_products %}
+            <div class="col-md-3 col-sm-6 mb-4">
+                <div class="card h-100">
+                    {% if similar_product.image_url %}
+                    <img src="{{ similar_product.image_url }}" 
+                         class="card-img-top" 
+                         alt="{{ similar_product.name }}"
+                         style="height: 200px; object-fit: cover;">
+                    {% else %}
+                    <div class="card-img-top bg-light d-flex align-items-center justify-content-center" 
+                         style="height: 200px;">
+                        <i class="fas fa-box fa-3x text-muted"></i>
+                    </div>
+                    {% endif %}
+                    <div class="card-body">
+                        <h6 class="card-title">{{ similar_product.name }}</h6>
+                        <p class="card-text text-danger fw-bold">
+                            {{ helpers.format_price(similar_product.price, 'RUB') }}
+                        </p>
+                        <a href="{{ url_for('get_product', product_id=similar_product.id) }}" 
+                           class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-eye"></i> Подробнее
+                        </a>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const productId = {{ product.id }};
+        const productStock = {{ product.stock }};
+        
+        // Добавление в корзину
+        document.getElementById('add-to-cart-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const quantity = parseInt(document.getElementById('quantity').value);
+            const selectedStrategy = document.querySelector('.btn-group .active').dataset.strategy;
+            
+            addToCart(productId, quantity, selectedStrategy);
+        });
+        
+        // Strategy Pattern - выбор способа добавления
+        document.querySelectorAll('[data-strategy]').forEach(button => {
+            button.addEventListener('click', function() {
+                // Убираем активный класс у всех кнопок
+                document.querySelectorAll('[data-strategy]').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                
+                // Добавляем активный класс текущей кнопке
+                this.classList.add('active');
+                
+                console.log('Strategy Pattern: выбрана стратегия', this.dataset.strategy);
+            });
+        });
+        
+        // Factory Pattern Demo
+        document.getElementById('demo-factory-btn')?.addEventListener('click', function() {
+            console.log('=== Factory Pattern Demo ===');
+            
+            // Абстрактная фабрика
+            class ProductFactory {
+                createProduct(type, data) {
+                    switch(type) {
+                        case 'electronic':
+                            return new ElectronicProduct(data);
+                        case 'clothing':
+                            return new ClothingProduct(data);
+                        case 'book':
+                            return new BookProduct(data);
+                        default:
+                            throw new Error('Unknown product type');
+                    }
+                }
+            }
+            
+            // Конкретные продукты
+            class ElectronicProduct {
+                constructor(data) {
+                    this.type = 'electronic';
+                    this.name = data.name;
+                    this.price = data.price;
+                    this.warranty = data.warranty || '12 месяцев';
+                }
+                
+                getDescription() {
+                    return `Электронный товар "${this.name}" с гарантией ${this.warranty}`;
+                }
+            }
+            
+            class ClothingProduct {
+                constructor(data) {
+                    this.type = 'clothing';
+                    this.name = data.name;
+                    this.price = data.price;
+                    this.size = data.size || 'M';
+                    this.color = data.color || 'черный';
+                }
+                
+                getDescription() {
+                    return `Одежда "${this.name}", размер ${this.size}, цвет ${this.color}`;
+                }
+            }
+            
+            class BookProduct {
+                constructor(data) {
+                    this.type = 'book';
+                    this.name = data.name;
+                    this.price = data.price;
+                    this.author = data.author || 'Неизвестный автор';
+                    this.pages = data.pages || 200;
+                }
+                
+                getDescription() {
+                    return `Книга "${this.name}", автор: ${this.author}, ${this.pages} страниц`;
+                }
+            }
+            
+            // Использование фабрики
+            const factory = new ProductFactory();
+            
+            // Создание разных типов продуктов
+            const products = [
+                factory.createProduct('electronic', {
+                    name: 'Смартфон',
+                    price: 29999,
+                    warranty: '24 месяца'
+                }),
+                factory.createProduct('clothing', {
+                    name: 'Футболка',
+                    price: 1999,
+                    size: 'L',
+                    color: 'синий'
+                }),
+                factory.createProduct('book', {
+                    name: 'Архитектура ПО',
+                    price: 1499,
+                    author: 'Эрих Гамма',
+                    pages: 395
+                })
+            ];
+            
+            console.log('Factory создал продукты:', products);
+            
+            // Вывод результатов
+            const output = products.map(p => `${p.getDescription()} - ${p.price} руб.`).join('\n');
+            alert(`Factory Pattern Demo:\n\n${output}\n\nСмотрите консоль браузера для подробностей.`);
+        });
+        
+        // Singleton Pattern Demo
+        document.getElementById('demo-singleton-btn')?.addEventListener('click', function() {
+            console.log('=== Singleton Pattern Demo ===');
+            
+            // Реализация Singleton
+            class DatabaseSingleton {
+                static instance = null;
+                
+                constructor() {
+                    if (DatabaseSingleton.instance) {
+                        return DatabaseSingleton.instance;
+                    }
+                    
+                    console.log('Creating new DatabaseSingleton instance...');
+                    this.connection = this.connectToDatabase();
+                    this.queryCount = 0;
+                    
+                    DatabaseSingleton.instance = this;
+                }
+                
+                connectToDatabase() {
+                    // Имитация подключения к БД
+                    return {
+                        host: 'localhost',
+                        port: 5432,
+                        database: 'ecommerce',
+                        status: 'connected'
+                    };
+                }
+                
+                query(sql) {
+                    this.queryCount++;
+                    console.log(`Query #${this.queryCount}: ${sql}`);
+                    return { rows: [], count: 0 };
+                }
+                
+                getStats() {
+                    return {
+                        connection: this.connection,
+                        queryCount: this.queryCount,
+                        instanceId: this.getInstanceId()
+                    };
+                }
+                
+                getInstanceId() {
+                    return 'singleton-' + Math.random().toString(36).substr(2, 9);
+                }
+            }
+            
+            // Демонстрация работы Singleton
+            const db1 = new DatabaseSingleton();
+            const db2 = new DatabaseSingleton();
+            const db3 = new DatabaseSingleton();
+            
+            console.log('Попытка создать 3 экземпляра...');
+            console.log('db1 === db2:', db1 === db2);
+            console.log('db2 === db3:', db2 === db3);
+            console.log('db1 === db3:', db1 === db3);
+            
+            // Выполняем запросы
+            db1.query('SELECT * FROM products');
+            db2.query('SELECT * FROM users');
+            db3.query('SELECT * FROM orders');
+            
+            // Получаем статистику
+            const stats = db1.getStats();
+            
+            // Выводим результат
+            const output = document.getElementById('singleton-output');
+            output.textContent = JSON.stringify({
+                isSameInstance: db1 === db2 && db2 === db3,
+                instanceId: stats.instanceId,
+                queryCount: stats.queryCount,
+                connection: stats.connection
+            }, null, 2);
+            
+            console.log('Singleton stats:', stats);
+            alert('Singleton Pattern: Все 3 переменные ссылаются на один и тот же экземпляр!\nСмотрите консоль браузера.');
+        });
+        
+        // Отзывы - звезды рейтинга
+        document.querySelectorAll('.rating-input .fa-star').forEach(star => {
+            star.addEventListener('mouseenter', function() {
+                const rating = parseInt(this.dataset.rating);
+                highlightStars(rating);
+            });
+            
+            star.addEventListener('click', function() {
+                const rating = parseInt(this.dataset.rating);
+                document.getElementById('rating-value').value = rating;
+                highlightStars(rating);
+            });
+        });
+        
+        document.querySelector('.rating-input').addEventListener('mouseleave', function() {
+            const currentRating = parseInt(document.getElementById('rating-value').value);
+            highlightStars(currentRating);
+        });
+        
+        // Отправка отзыва
+        document.getElementById('review-form')?.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const rating = document.getElementById('rating-value').value;
+            const text = document.getElementById('review-text').value.trim();
+            
+            if (!rating || rating === '0') {
+                alert('Пожалуйста, поставьте оценку');
+                return;
+            }
+            
+            if (!text) {
+                alert('Пожалуйста, напишите отзыв');
+                return;
+            }
+            
+            // В реальном приложении здесь был бы AJAX запрос
+            console.log('Отправка отзыва:', { rating, text });
+            alert('Отзыв отправлен! (демо)');
+            
+            // Сброс формы
+            document.getElementById('rating-value').value = '0';
+            document.getElementById('review-text').value = '';
+            highlightStars(0);
+        });
+        
+        // Вспомогательные функции
+        function addToCart(productId, quantity, strategy) {
+            if (quantity > productStock) {
+                alert('Недостаточно товара на складе');
+                return;
+            }
+            
+            // Strategy Pattern реализация
+            const strategies = {
+                standard: function() {
+                    console.log('Standard cart strategy: normal processing');
+                    return 'standard';
+                },
+                express: function() {
+                    console.log('Express cart strategy: priority processing');
+                    return 'express';
+                },
+                gift: function() {
+                    console.log('Gift cart strategy: gift wrapping added');
+                    return 'gift';
+                }
+            };
+            
+            const selectedStrategy = strategies[strategy];
+            if (selectedStrategy) {
+                const strategyResult = selectedStrategy();
+                console.log('Strategy result:', strategyResult);
+            }
+            
+            // Отправка запроса
+            fetch('/cart/items', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': AppConfig.csrfToken
+                },
+                body: JSON.stringify({
+                    product_id: productId,
+                    quantity: quantity,
+                    strategy: strategy
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    showNotification('Товар добавлен в корзину!', 'success');
+                    
+                    // Observer Pattern: уведомление об изменении корзины
+                    if (typeof window.cartObserver !== 'undefined') {
+                        window.cartObserver.notify({
+                            type: 'product_added',
+                            productId: productId,
+                            quantity: quantity,
+                            strategy: strategy
+                        });
+                    }
+                } else {
+                    showNotification('Ошибка: ' + data.error, 'error');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                showNotification('Ошибка соединения', 'error');
+            });
+        }
+        
+        function highlightStars(rating) {
+            document.querySelectorAll('.rating-input .fa-star').forEach((star, index) => {
+                if (index < rating) {
+                    star.classList.remove('far');
+                    star.classList.add('fas');
+                } else {
+                    star.classList.remove('fas');
+                    star.classList.add('far');
+                }
+            });
+        }
+        
+        function showNotification(message, type) {
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, type);
+            } else {
+                alert(message);
+            }
+        }
+    });
+</script>
+
+<style>
+    .product-title {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    
+    .rating-input {
+        font-size: 1.5rem;
+        color: #ffc107;
+        cursor: pointer;
+    }
+    
+    .rating-input .fa-star {
+        margin-right: 5px;
+    }
+    
+    .review-item {
+        background: #f8f9fa;
+    }
+    
+    #singleton-output {
+        font-size: 0.85rem;
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.8rem;
+    }
+</style>
+{% endblock %}

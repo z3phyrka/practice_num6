@@ -1,0 +1,1014 @@
+{% extends "base.html" %}
+
+{% block title %}Мой профиль - Онлайн-магазин{% endblock %}
+
+{% block content %}
+<div class="user-profile-page">
+    <div class="row">
+        <!-- Боковая панель -->
+        <div class="col-lg-3">
+            <div class="card">
+                <div class="card-body text-center">
+                    <div class="user-avatar mb-3">
+                        <div class="avatar-circle bg-primary text-white d-inline-flex align-items-center justify-content-center" 
+                             style="width: 100px; height: 100px; border-radius: 50%; font-size: 2.5rem;">
+                            {{ current_user.username[0]|upper }}
+                        </div>
+                    </div>
+                    <h5 class="card-title">{{ current_user.username }}</h5>
+                    <p class="text-muted">{{ current_user.email }}</p>
+                    <p class="small">
+                        <i class="fas fa-calendar-alt me-1"></i>
+                        Зарегистрирован: {{ current_user.created_at.strftime('%d.%m.%Y') }}
+                    </p>
+                </div>
+                
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item">
+                        <a href="#profile" class="text-decoration-none">
+                            <i class="fas fa-user me-2"></i> Профиль
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="#orders" class="text-decoration-none">
+                            <i class="fas fa-receipt me-2"></i> Мои заказы
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="#settings" class="text-decoration-none">
+                            <i class="fas fa-cog me-2"></i> Настройки
+                        </a>
+                    </li>
+                    <li class="list-group-item">
+                        <a href="#notifications" class="text-decoration-none">
+                            <i class="fas fa-bell me-2"></i> Уведомления
+                        </a>
+                    </li>
+                </ul>
+            </div>
+            
+            <!-- Facade Pattern Demo -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h6 class="mb-0">
+                        <i class="fas fa-building"></i> Facade Pattern
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <p class="card-text small">
+                        Получить сводную информацию о профиле через Facade:
+                    </p>
+                    <button class="btn btn-sm btn-info w-100" id="get-dashboard-btn">
+                        <i class="fas fa-chart-bar"></i> Получить дашборд
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Основной контент -->
+        <div class="col-lg-9">
+            <!-- Вкладки -->
+            <ul class="nav nav-tabs mb-4" id="profileTabs" role="tablist">
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link active" id="profile-tab" data-bs-toggle="tab" data-bs-target="#profile">
+                        <i class="fas fa-user"></i> Профиль
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="orders-tab" data-bs-toggle="tab" data-bs-target="#orders">
+                        <i class="fas fa-receipt"></i> Заказы
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security">
+                        <i class="fas fa-shield-alt"></i> Безопасность
+                    </button>
+                </li>
+                <li class="nav-item" role="presentation">
+                    <button class="nav-link" id="patterns-tab" data-bs-toggle="tab" data-bs-target="#patterns">
+                        <i class="fas fa-puzzle-piece"></i> Паттерны
+                    </button>
+                </li>
+            </ul>
+            
+            <div class="tab-content" id="profileTabsContent">
+                <!-- Вкладка профиля -->
+                <div class="tab-pane fade show active" id="profile" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Личная информация</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="profile-form">
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Имя пользователя</label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ current_user.username }}" readonly>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Email адрес</label>
+                                        <input type="email" class="form-control" 
+                                               value="{{ current_user.email }}" readonly>
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Имя</label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ current_user.first_name or '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Фамилия</label>
+                                        <input type="text" class="form-control" 
+                                               value="{{ current_user.last_name or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <label class="form-label">Телефон</label>
+                                        <input type="tel" class="form-control" 
+                                               value="{{ current_user.phone or '' }}">
+                                    </div>
+                                    <div class="col-md-6">
+                                        <label class="form-label">Дата рождения</label>
+                                        <input type="date" class="form-control" 
+                                               value="{{ current_user.birth_date or '' }}">
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label">Адрес</label>
+                                    <textarea class="form-control" rows="3">{{ current_user.address or '' }}</textarea>
+                                </div>
+                                
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="fas fa-save"></i> Сохранить изменения
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <!-- Статистика -->
+                    <div class="row mt-4">
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 class="text-primary" id="total-orders">0</h2>
+                                    <p class="text-muted">Всего заказов</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 class="text-success" id="total-spent">0</h2>
+                                    <p class="text-muted">Всего потрачено</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="card text-center">
+                                <div class="card-body">
+                                    <h2 class="text-info" id="member-since">0</h2>
+                                    <p class="text-muted">Дней с нами</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка заказов -->
+                <div class="tab-pane fade" id="orders" role="tabpanel">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0">История заказов</h5>
+                            <a href="{{ url_for('get_orders') }}" class="btn btn-sm btn-outline-primary">
+                                <i class="fas fa-external-link-alt"></i> Все заказы
+                            </a>
+                        </div>
+                        <div class="card-body">
+                            {% if orders %}
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Номер заказа</th>
+                                            <th>Дата</th>
+                                            <th>Сумма</th>
+                                            <th>Статус</th>
+                                            <th>Действия</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for order in orders[:5] %}
+                                        <tr>
+                                            <td>#{{ order.order_number }}</td>
+                                            <td>{{ order.created_at.strftime('%d.%m.%Y') }}</td>
+                                            <td>{{ helpers.format_price(order.total_amount, 'RUB') }}</td>
+                                            <td>
+                                                <span class="badge bg-{{ 
+                                                    'secondary' if order.status == 'pending' else
+                                                    'primary' if order.status == 'paid' else
+                                                    'info' if order.status == 'shipped' else
+                                                    'success' if order.status == 'delivered' else
+                                                    'danger'
+                                                }}">
+                                                    {{ order.status|upper }}
+                                                </span>
+                                            </td>
+                                            <td>
+                                                <a href="{{ url_for('get_order', order_id=order.id) }}" 
+                                                   class="btn btn-sm btn-outline-info">
+                                                    <i class="fas fa-eye"></i>
+                                                </a>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            {% if orders|length > 5 %}
+                            <div class="text-center mt-3">
+                                <a href="{{ url_for('get_orders') }}" class="btn btn-outline-secondary">
+                                    Показать все {{ orders|length }} заказов
+                                </a>
+                            </div>
+                            {% endif %}
+                            
+                            {% else %}
+                            <div class="text-center py-5">
+                                <i class="fas fa-receipt fa-3x text-muted mb-3"></i>
+                                <h5>Заказов пока нет</h5>
+                                <p class="text-muted">Сделайте свой первый заказ!</p>
+                                <a href="{{ url_for('get_products') }}" class="btn btn-primary">
+                                    <i class="fas fa-store"></i> Перейти в магазин
+                                </a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка безопасности -->
+                <div class="tab-pane fade" id="security" role="tabpanel">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Смена пароля</h5>
+                                </div>
+                                <div class="card-body">
+                                    <form id="password-form">
+                                        <div class="mb-3">
+                                            <label class="form-label">Текущий пароль</label>
+                                            <input type="password" class="form-control" 
+                                                   id="current-password" required>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Новый пароль</label>
+                                            <input type="password" class="form-control" 
+                                                   id="new-password" required>
+                                            <small class="text-muted">
+                                                Пароль должен содержать не менее 8 символов
+                                            </small>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">Подтвердите новый пароль</label>
+                                            <input type="password" class="form-control" 
+                                                   id="confirm-password" required>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-key"></i> Сменить пароль
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Двухфакторная аутентификация</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Увеличьте безопасность вашего аккаунта с помощью 2FA.
+                                    </p>
+                                    <div class="form-check form-switch">
+                                        <input class="form-check-input" type="checkbox" id="2fa-switch">
+                                        <label class="form-check-label" for="2fa-switch">
+                                            Включить 2FA
+                                        </label>
+                                    </div>
+                                    <div class="alert alert-info mt-3">
+                                        <i class="fas fa-info-circle"></i>
+                                        После включения вам нужно будет сканировать QR-код 
+                                        в приложении Google Authenticator.
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="card">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Активные сессии</h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Управляйте активными сессиями вашего аккаунта.
+                                    </p>
+                                    <button class="btn btn-outline-danger" id="logout-all-btn">
+                                        <i class="fas fa-sign-out-alt"></i> Выйти со всех устройств
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Вкладка паттернов -->
+                <div class="tab-pane fade" id="patterns" role="tabpanel">
+                    <h4 class="mb-4">Демонстрация архитектурных паттернов</h4>
+                    
+                    <div class="row">
+                        <!-- Observer Pattern -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-success text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-bell"></i> Observer Pattern
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Подпишитесь на уведомления о изменениях в профиле.
+                                    </p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Типы уведомлений:</label>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="notify-email" checked>
+                                            <label class="form-check-label" for="notify-email">
+                                                Email уведомления
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="notify-sms">
+                                            <label class="form-check-label" for="notify-sms">
+                                                SMS уведомления
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="notify-push" checked>
+                                            <label class="form-check-label" for="notify-push">
+                                                Push уведомления
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <button class="btn btn-success w-100" id="demo-observer-btn">
+                                        <i class="fas fa-paper-plane"></i> Отправить тестовое уведомление
+                                    </button>
+                                    
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            Observers: EmailNotifier, SMSNotifier, PushNotifier
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Strategy Pattern -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-warning text-dark">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-chess"></i> Strategy Pattern
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Выберите стратегию для экспорта данных профиля.
+                                    </p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Формат экспорта:</label>
+                                        <select class="form-select" id="export-format">
+                                            <option value="json">JSON</option>
+                                            <option value="xml">XML</option>
+                                            <option value="csv">CSV</option>
+                                            <option value="pdf">PDF</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-warning w-100" id="demo-strategy-btn">
+                                        <i class="fas fa-download"></i> Экспортировать профиль
+                                    </button>
+                                    
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            Стратегии: JSONExportStrategy, XMLExportStrategy, 
+                                            CSVExportStrategy, PDFExportStrategy
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Adapter Pattern -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-primary text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-exchange-alt"></i> Adapter Pattern
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Интеграция с социальными сетями через адаптеры.
+                                    </p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Социальная сеть:</label>
+                                        <select class="form-select" id="social-network">
+                                            <option value="facebook">Facebook</option>
+                                            <option value="twitter">Twitter</option>
+                                            <option value="google">Google</option>
+                                            <option value="github">GitHub</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-primary w-100" id="demo-adapter-btn">
+                                        <i class="fas fa-share-alt"></i> Поделиться профилем
+                                    </button>
+                                    
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            Адаптеры: FacebookAdapter, TwitterAdapter, 
+                                            GoogleAdapter, GitHubAdapter
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Factory Pattern -->
+                        <div class="col-md-6 mb-4">
+                            <div class="card h-100">
+                                <div class="card-header bg-info text-white">
+                                    <h5 class="mb-0">
+                                        <i class="fas fa-industry"></i> Factory Pattern
+                                    </h5>
+                                </div>
+                                <div class="card-body">
+                                    <p class="card-text">
+                                        Создание различных типов пользователей через фабрику.
+                                    </p>
+                                    
+                                    <div class="mb-3">
+                                        <label class="form-label">Тип пользователя:</label>
+                                        <select class="form-select" id="user-type">
+                                            <option value="customer">Покупатель</option>
+                                            <option value="admin">Администратор</option>
+                                            <option value="moderator">Модератор</option>
+                                            <option value="vendor">Продавец</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <button class="btn btn-info w-100" id="demo-factory-btn">
+                                        <i class="fas fa-user-plus"></i> Создать пользователя
+                                    </button>
+                                    
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            Фабрики: CustomerFactory, AdminFactory, 
+                                            ModeratorFactory, VendorFactory
+                                        </small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Результаты демо -->
+                    <div class="card mt-4">
+                        <div class="card-header">
+                            <h5 class="mb-0">Результаты демонстрации</h5>
+                        </div>
+                        <div class="card-body">
+                            <pre id="demo-output" class="bg-light p-3 rounded" 
+                                 style="max-height: 300px; overflow-y: auto;"></pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const userId = {{ current_user.id }};
+        
+        // Загрузка статистики
+        loadUserStats();
+        
+        // Facade Pattern - получение дашборда
+        document.getElementById('get-dashboard-btn')?.addEventListener('click', function() {
+            console.log('=== Facade Pattern Demo ===');
+            
+            // Имитация работы Facade
+            const facade = {
+                getUserDashboard: function(userId) {
+                    console.log('Facade: Получение дашборда пользователя', userId);
+                    
+                    // Имитация сложной логики
+                    const stats = {
+                        totalOrders: 12,
+                        totalSpent: 45678.90,
+                        favoriteCategory: 'Электроника',
+                        lastOrderDate: '2024-12-20',
+                        recommendations: ['Смартфон', 'Наушники', 'Чехол']
+                    };
+                    
+                    const orders = [
+                        { id: 1, total: 12345, status: 'delivered' },
+                        { id: 2, total: 6789, status: 'shipped' },
+                        { id: 3, total: 4567, status: 'pending' }
+                    ];
+                    
+                    const userInfo = {
+                        username: '{{ current_user.username }}',
+                        email: '{{ current_user.email }}',
+                        memberSince: '{{ current_user.created_at.strftime("%Y-%m-%d") }}'
+                    };
+                    
+                    return {
+                        success: true,
+                        data: {
+                            userInfo: userInfo,
+                            stats: stats,
+                            recentOrders: orders,
+                            timestamp: new Date().toISOString()
+                        }
+                    };
+                }
+            };
+            
+            const result = facade.getUserDashboard(userId);
+            console.log('Facade result:', result);
+            
+            // Обновление статистики на странице
+            if (result.success) {
+                document.getElementById('total-orders').textContent = result.data.stats.totalOrders;
+                document.getElementById('total-spent').textContent = 
+                    formatPrice(result.data.stats.totalSpent);
+                
+                // Расчет дней с момента регистрации
+                const memberSince = new Date(result.data.userInfo.memberSince);
+                const today = new Date();
+                const daysDiff = Math.floor((today - memberSince) / (1000 * 60 * 60 * 24));
+                document.getElementById('member-since').textContent = daysDiff;
+                
+                showNotification('Дашборд загружен через Facade!', 'success');
+            }
+        });
+        
+        // Observer Pattern Demo
+        document.getElementById('demo-observer-btn')?.addEventListener('click', function() {
+            console.log('=== Observer Pattern Demo ===');
+            
+            // Subject
+            class NotificationSubject {
+                constructor() {
+                    this.observers = [];
+                }
+                
+                subscribe(observer) {
+                    this.observers.push(observer);
+                    console.log(`Observer subscribed: ${observer.name}`);
+                }
+                
+                unsubscribe(observer) {
+                    this.observers = this.observers.filter(obs => obs !== observer);
+                }
+                
+                notify(message, type) {
+                    console.log(`Notifying ${this.observers.length} observers`);
+                    this.observers.forEach(observer => {
+                        observer.update(message, type);
+                    });
+                }
+            }
+            
+            // Observers
+            class EmailNotifier {
+                get name() { return 'EmailNotifier'; }
+                
+                update(message, type) {
+                    if (document.getElementById('notify-email').checked) {
+                        console.log(`[EmailNotifier] Sending email: ${message}`);
+                    }
+                }
+            }
+            
+            class SMSNotifier {
+                get name() { return 'SMSNotifier'; }
+                
+                update(message, type) {
+                    if (document.getElementById('notify-sms').checked) {
+                        console.log(`[SMSNotifier] Sending SMS: ${message}`);
+                    }
+                }
+            }
+            
+            class PushNotifier {
+                get name() { return 'PushNotifier'; }
+                
+                update(message, type) {
+                    if (document.getElementById('notify-push').checked) {
+                        console.log(`[PushNotifier] Sending push: ${message}`);
+                    }
+                }
+            }
+            
+            // Создание Subject и Observers
+            const notificationSystem = new NotificationSubject();
+            notificationSystem.subscribe(new EmailNotifier());
+            notificationSystem.subscribe(new SMSNotifier());
+            notificationSystem.subscribe(new PushNotifier());
+            
+            // Отправка тестового уведомления
+            notificationSystem.notify('Тестовое уведомление из профиля', 'info');
+            
+            showDemoOutput('Observer Pattern: Уведомления отправлены всем подписчикам\nСмотрите консоль браузера');
+            showNotification('Observer Pattern демо выполнено!', 'info');
+        });
+        
+        // Strategy Pattern Demo
+        document.getElementById('demo-strategy-btn')?.addEventListener('click', function() {
+            const format = document.getElementById('export-format').value;
+            
+            console.log('=== Strategy Pattern Demo ===');
+            
+            // Strategy Interface
+            class ExportStrategy {
+                export(data) {
+                    throw new Error('Method not implemented');
+                }
+            }
+            
+            // Concrete Strategies
+            class JSONExportStrategy extends ExportStrategy {
+                export(data) {
+                    return JSON.stringify(data, null, 2);
+                }
+                
+                get name() { return 'JSON'; }
+            }
+            
+            class XMLExportStrategy extends ExportStrategy {
+                export(data) {
+                    let xml = '<?xml version="1.0" encoding="UTF-8"?>\n<profile>\n';
+                    
+                    for (const [key, value] of Object.entries(data)) {
+                        xml += `  <${key}>${value}</${key}>\n`;
+                    }
+                    
+                    xml += '</profile>';
+                    return xml;
+                }
+                
+                get name() { return 'XML'; }
+            }
+            
+            class CSVExportStrategy extends ExportStrategy {
+                export(data) {
+                    const headers = Object.keys(data).join(',');
+                    const values = Object.values(data).map(v => 
+                        typeof v === 'string' ? `"${v}"` : v
+                    ).join(',');
+                    
+                    return `${headers}\n${values}`;
+                }
+                
+                get name() { return 'CSV'; }
+            }
+            
+            class PDFExportStrategy extends ExportStrategy {
+                export(data) {
+                    return `PDF Document\nUser Profile\n\n${JSON.stringify(data, null, 2)}`;
+                }
+                
+                get name() { return 'PDF'; }
+            }
+            
+            // Context
+            class ExportContext {
+                constructor(strategy) {
+                    this.strategy = strategy;
+                }
+                
+                setStrategy(strategy) {
+                    this.strategy = strategy;
+                }
+                
+                executeExport(data) {
+                    return this.strategy.export(data);
+                }
+            }
+            
+            // Выбор стратегии
+            let strategy;
+            switch(format) {
+                case 'json':
+                    strategy = new JSONExportStrategy();
+                    break;
+                case 'xml':
+                    strategy = new XMLExportStrategy();
+                    break;
+                case 'csv':
+                    strategy = new CSVExportStrategy();
+                    break;
+                case 'pdf':
+                    strategy = new PDFExportStrategy();
+                    break;
+                default:
+                    strategy = new JSONExportStrategy();
+            }
+            
+            // Использование стратегии
+            const context = new ExportContext(strategy);
+            const userData = {
+                username: '{{ current_user.username }}',
+                email: '{{ current_user.email }}',
+                userId: userId,
+                exportDate: new Date().toISOString()
+            };
+            
+            const result = context.executeExport(userData);
+            
+            console.log(`Strategy ${strategy.name} result:`, result);
+            showDemoOutput(result);
+            
+            // Создание файла для скачивания
+            const blob = new Blob([result], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `profile_export.${format}`;
+            a.click();
+            URL.revokeObjectURL(url);
+            
+            showNotification(`Профиль экспортирован в формате ${strategy.name}`, 'success');
+        });
+        
+        // Adapter Pattern Demo
+        document.getElementById('demo-adapter-btn')?.addEventListener('click', function() {
+            const network = document.getElementById('social-network').value;
+            
+            console.log('=== Adapter Pattern Demo ===');
+            
+            // Разные API социальных сетей (несовместимые интерфейсы)
+            const socialAPIs = {
+                facebook: {
+                    postToWall: function(message, link) {
+                        return `Posted to Facebook: ${message}`;
+                    }
+                },
+                
+                twitter: {
+                    tweet: function(text) {
+                        return `Tweeted: ${text}`;
+                    }
+                },
+                
+                google: {
+                    shareToPlus: function(content) {
+                        return `Shared on Google+: ${content}`;
+                    }
+                },
+                
+                github: {
+                    createGist: function(title, content) {
+                        return `Created Gist on GitHub: ${title}`;
+                    }
+                }
+            };
+            
+            // Adapter для унификации интерфейса
+            class SocialMediaAdapter {
+                constructor(api) {
+                    this.api = api;
+                }
+                
+                share(content, options = {}) {
+                    if (this.api.postToWall) {
+                        // Facebook-style API
+                        return this.api.postToWall(content, options.link);
+                    } else if (this.api.tweet) {
+                        // Twitter-style API
+                        return this.api.tweet(content);
+                    } else if (this.api.shareToPlus) {
+                        // Google-style API
+                        return this.api.shareToPlus(content);
+                    } else if (this.api.createGist) {
+                        // GitHub-style API
+                        return this.api.createGist(options.title || 'Profile', content);
+                    } else {
+                        throw new Error('Unsupported social media API');
+                    }
+                }
+            }
+            
+            // Использование адаптера
+            const api = socialAPIs[network];
+            const adapter = new SocialMediaAdapter(api);
+            
+            try {
+                const result = adapter.share(
+                    `Мой профиль в онлайн-магазине: {{ current_user.username }}`,
+                    { link: window.location.href, title: 'Мой профиль' }
+                );
+                
+                console.log('Adapter result:', result);
+                showDemoOutput(`Adapter Pattern: ${result}`);
+                showNotification(`Профиль опубликован в ${network}`, 'success');
+                
+            } catch (error) {
+                console.error('Adapter error:', error);
+                showDemoOutput(`Ошибка: ${error.message}`);
+            }
+        });
+        
+        // Factory Pattern Demo
+        document.getElementById('demo-factory-btn')?.addEventListener('click', function() {
+            const userType = document.getElementById('user-type').value;
+            
+            console.log('=== Factory Pattern Demo ===');
+            
+            // Product
+            class User {
+                constructor(type, data) {
+                    this.type = type;
+                    this.username = data.username;
+                    this.email = data.email;
+                    this.permissions = data.permissions || [];
+                }
+                
+                describe() {
+                    return `${this.type}: ${this.username} (${this.email})`;
+                }
+            }
+            
+            // Concrete Products
+            class Customer extends User {
+                constructor(data) {
+                    super('customer', data);
+                    this.permissions = ['browse', 'purchase', 'review'];
+                    this.discount = 0;
+                }
+            }
+            
+            class Admin extends User {
+                constructor(data) {
+                    super('admin', data);
+                    this.permissions = ['all'];
+                    this.role = 'administrator';
+                }
+            }
+            
+            class Moderator extends User {
+                constructor(data) {
+                    super('moderator', data);
+                    this.permissions = ['manage_content', 'moderate_reviews'];
+                    this.role = 'moderator';
+                }
+            }
+            
+            class Vendor extends User {
+                constructor(data) {
+                    super('vendor', data);
+                    this.permissions = ['manage_products', 'view_sales'];
+                    this.commissionRate = 0.1;
+                }
+            }
+            
+            // Factory
+            class UserFactory {
+                createUser(type, data) {
+                    switch(type) {
+                        case 'customer':
+                            return new Customer(data);
+                        case 'admin':
+                            return new Admin(data);
+                        case 'moderator':
+                            return new Moderator(data);
+                        case 'vendor':
+                            return new Vendor(data);
+                        default:
+                            throw new Error(`Unknown user type: ${type}`);
+                    }
+                }
+            }
+            
+            // Использование фабрики
+            const factory = new UserFactory();
+            const userData = {
+                username: `new_${userType}_${Date.now().toString().slice(-6)}`,
+                email: `${userType}@example.com`
+            };
+            
+            try {
+                const user = factory.createUser(userType, userData);
+                console.log('Factory created user:', user);
+                
+                showDemoOutput(`Factory создал пользователя:\n\n${user.describe()}\n\nРазрешения: ${user.permissions.join(', ')}`);
+                showNotification(`Создан пользователь типа: ${userType}`, 'success');
+                
+            } catch (error) {
+                console.error('Factory error:', error);
+                showDemoOutput(`Ошибка: ${error.message}`);
+            }
+        });
+        
+        // Вспомогательные функции
+        async function loadUserStats() {
+            try {
+                // В реальном приложении здесь был бы запрос к API
+                const response = await fetch(`/api/users/${userId}/stats`);
+                const data = await response.json();
+                
+                if (data.success) {
+                    document.getElementById('total-orders').textContent = data.data.totalOrders;
+                    document.getElementById('total-spent').textContent = 
+                        formatPrice(data.data.totalSpent);
+                    
+                    // Расчет дней с момента регистрации
+                    const memberSince = new Date('{{ current_user.created_at.strftime("%Y-%m-%d") }}');
+                    const today = new Date();
+                    const daysDiff = Math.floor((today - memberSince) / (1000 * 60 * 60 * 24));
+                    document.getElementById('member-since').textContent = daysDiff;
+                }
+            } catch (error) {
+                console.error('Error loading stats:', error);
+                // Значения по умолчанию для демо
+                document.getElementById('total-orders').textContent = '5';
+                document.getElementById('total-spent').textContent = formatPrice(12345);
+                document.getElementById('member-since').textContent = '30';
+            }
+        }
+        
+        function formatPrice(price) {
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                minimumFractionDigits: 0
+            }).format(price);
+        }
+        
+        function showDemoOutput(text) {
+            const output = document.getElementById('demo-output');
+            if (output) {
+                output.textContent = text;
+            }
+        }
+        
+        function showNotification(message, type) {
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, type);
+            } else {
+                alert(message);
+            }
+        }
+    });
+</script>
+
+<style>
+    .avatar-circle {
+        font-weight: bold;
+    }
+    
+    .list-group-item a {
+        color: #495057;
+    }
+    
+    .list-group-item a:hover {
+        color: #0d6efd;
+    }
+    
+    #demo-output {
+        font-family: 'Courier New', monospace;
+        font-size: 0.9rem;
+    }
+</style>
+{% endblock %}

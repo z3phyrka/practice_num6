@@ -1,0 +1,591 @@
+{% extends "base.html" %}
+
+{% block title %}Корзина - Онлайн-магазин{% endblock %}
+
+{% block content %}
+<div class="cart-page">
+    <h1 class="mb-4">
+        <i class="fas fa-shopping-cart"></i> Корзина покупок
+    </h1>
+    
+    {% if cart and cart.items %}
+    <div class="row">
+        <!-- Список товаров -->
+        <div class="col-lg-8">
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Товары в корзине ({{ cart.items|length }})</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Товар</th>
+                                    <th>Цена</th>
+                                    <th>Количество</th>
+                                    <th>Сумма</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in cart.items %}
+                                <tr data-item-id="{{ item.id }}">
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.product.image_url %}
+                                            <img src="{{ item.product.image_url }}" 
+                                                 alt="{{ item.product.name }}" 
+                                                 class="img-thumbnail me-3" 
+                                                 style="width: 60px; height: 60px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="img-thumbnail me-3 d-flex align-items-center justify-content-center" 
+                                                 style="width: 60px; height: 60px; background: #f8f9fa;">
+                                                <i class="fas fa-box text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ item.product.name }}</h6>
+                                                <small class="text-muted">{{ item.product.category }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        <span class="product-price">{{ helpers.format_price(item.product.price, 'RUB') }}</span>
+                                    </td>
+                                    <td>
+                                        <div class="quantity-control d-flex align-items-center">
+                                            <button class="btn btn-sm btn-outline-secondary decrease-quantity" 
+                                                    data-item-id="{{ item.id }}"
+                                                    data-product-id="{{ item.product.id }}">
+                                                <i class="fas fa-minus"></i>
+                                            </button>
+                                            <input type="number" 
+                                                   class="form-control form-control-sm mx-2 quantity-input" 
+                                                   value="{{ item.quantity }}" 
+                                                   min="1" 
+                                                   max="{{ item.product.stock }}"
+                                                   style="width: 70px;"
+                                                   data-item-id="{{ item.id }}"
+                                                   data-product-id="{{ item.product.id }}">
+                                            <button class="btn btn-sm btn-outline-secondary increase-quantity" 
+                                                    data-item-id="{{ item.id }}"
+                                                    data-product-id="{{ item.product.id }}"
+                                                    {% if item.quantity >= item.product.stock %}disabled{% endif %}>
+                                                <i class="fas fa-plus"></i>
+                                            </button>
+                                        </div>
+                                        <small class="text-muted d-block mt-1">
+                                            На складе: {{ item.product.stock }}
+                                        </small>
+                                    </td>
+                                    <td>
+                                        <span class="item-subtotal fw-bold">
+                                            {{ helpers.format_price(item.get_subtotal(), 'RUB') }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-danger remove-item" 
+                                                data-item-id="{{ item.id }}"
+                                                data-product-name="{{ item.product.name }}">
+                                            <i class="fas fa-trash"></i> Удалить
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <button class="btn btn-outline-secondary" id="clear-cart">
+                            <i class="fas fa-trash"></i> Очистить корзину
+                        </button>
+                        <a href="{{ url_for('get_products') }}" class="btn btn-outline-primary">
+                            <i class="fas fa-plus"></i> Продолжить покупки
+                        </a>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observer Pattern Demo -->
+            <div class="card mt-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-eye"></i> Observer Pattern Demo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Паттерн Observer используется для отслеживания изменений в корзине.
+                        При изменении количества товара все подписчики получают уведомления.
+                    </p>
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i>
+                        Попробуйте изменить количество товара и посмотрите консоль браузера
+                    </div>
+                    <button class="btn btn-info" id="demo-observer">
+                        <i class="fas fa-play"></i> Запустить демо Observer
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Итоговая информация -->
+        <div class="col-lg-4">
+            <div class="card sticky-top" style="top: 20px;">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Итог заказа</h5>
+                </div>
+                <div class="card-body">
+                    <div class="order-summary">
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Товары ({{ cart.get_item_count() }} шт.)</span>
+                            <span id="subtotal">{{ helpers.format_price(cart.get_total(), 'RUB') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2">
+                            <span>Доставка</span>
+                            <span id="shipping-cost">{{ helpers.format_price(0, 'RUB') }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3">
+                            <span>Налог</span>
+                            <span id="tax">{{ helpers.format_price(cart.get_total() * 0.2, 'RUB') }}</span>
+                        </div>
+                        <hr>
+                        <div class="d-flex justify-content-between mb-3">
+                            <h5>Итого</h5>
+                            <h5 id="order-total">{{ helpers.format_price(cart.get_total() * 1.2, 'RUB') }}</h5>
+                        </div>
+                        
+                        <!-- Strategy Pattern Demo - Выбор способа оплаты -->
+                        <div class="mb-3">
+                            <label class="form-label">Способ оплаты</label>
+                            <select class="form-select" id="payment-method">
+                                <option value="credit_card">💳 Кредитная карта</option>
+                                <option value="paypal">🌐 PayPal</option>
+                                <option value="crypto">₿ Криптовалюта</option>
+                            </select>
+                            <small class="text-muted">
+                                Strategy Pattern: каждый способ оплаты реализует свою стратегию
+                            </small>
+                            
+                            <!-- Формы оплаты (показываются в зависимости от выбора) -->
+                            <div id="credit-card-form" class="payment-form mt-3">
+                                <div class="mb-2">
+                                    <input type="text" class="form-control" placeholder="Номер карты" id="card-number">
+                                </div>
+                                <div class="row mb-2">
+                                    <div class="col">
+                                        <input type="text" class="form-control" placeholder="ММ/ГГ" id="card-expiry">
+                                    </div>
+                                    <div class="col">
+                                        <input type="text" class="form-control" placeholder="CVV" id="card-cvv">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div id="paypal-form" class="payment-form mt-3" style="display: none;">
+                                <div class="alert alert-info">
+                                    <i class="fab fa-paypal"></i>
+                                    Вы будете перенаправлены на сайт PayPal для оплаты
+                                </div>
+                            </div>
+                            
+                            <div id="crypto-form" class="payment-form mt-3" style="display: none;">
+                                <div class="alert alert-warning">
+                                    <i class="fas fa-coins"></i>
+                                    Криптовалютный адрес для оплаты: 
+                                    <code>0x742d35Cc6634C0532925a3b844Bc9e</code>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button class="btn btn-success btn-lg w-100" id="checkout-btn">
+                            <i class="fas fa-lock"></i> Перейти к оформлению
+                        </button>
+                        
+                        <div class="text-center mt-3">
+                            <small class="text-muted">
+                                Нажимая кнопку, вы соглашаетесь с 
+                                <a href="#">условиями использования</a>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Facade Pattern Demo -->
+            <div class="card mt-4">
+                <div class="card-header bg-warning text-dark">
+                    <h5 class="mb-0">
+                        <i class="fas fa-building"></i> Facade Pattern Demo
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Паттерн Facade предоставляет простой интерфейс для сложной системы.
+                        Нажмите кнопку ниже, чтобы выполнить всю цепочку покупки через один метод.
+                    </p>
+                    <button class="btn btn-warning w-100" id="demo-facade">
+                        <i class="fas fa-bolt"></i> Быстрая покупка через Facade
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% else %}
+    <!-- Пустая корзина -->
+    <div class="empty-cart text-center py-5">
+        <div class="empty-cart-icon mb-4">
+            <i class="fas fa-shopping-cart fa-5x text-muted"></i>
+        </div>
+        <h3 class="mb-3">Ваша корзина пуста</h3>
+        <p class="text-muted mb-4">Добавьте товары из каталога, чтобы сделать заказ</p>
+        <a href="{{ url_for('get_products') }}" class="btn btn-primary btn-lg">
+            <i class="fas fa-store"></i> Перейти в каталог
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const cartData = {{ cart.to_dict()|tojson|safe if cart else 'null' }};
+        
+        // Observer Pattern Demo
+        document.getElementById('demo-observer')?.addEventListener('click', function() {
+            console.log('=== Observer Pattern Demo ===');
+            
+            // Создаем Subject
+            class CartSubject {
+                constructor() {
+                    this.observers = [];
+                }
+                
+                subscribe(observer) {
+                    this.observers.push(observer);
+                    console.log('Observer subscribed:', observer.name);
+                }
+                
+                unsubscribe(observer) {
+                    this.observers = this.observers.filter(obs => obs !== observer);
+                }
+                
+                notify(data) {
+                    console.log('Notifying observers:', this.observers.length);
+                    this.observers.forEach(observer => observer.update(data));
+                }
+            }
+            
+            // Создаем Observers
+            class CartCounterObserver {
+                update(data) {
+                    console.log('CartCounterObserver: Cart updated', data);
+                    // В реальном приложении здесь обновлялся бы счетчик корзины
+                }
+            }
+            
+            class PriceCalculatorObserver {
+                update(data) {
+                    console.log('PriceCalculatorObserver: Recalculating total', data);
+                    // В реальном приложении здесь пересчитывалась бы сумма
+                }
+            }
+            
+            // Использование Observer Pattern
+            const cartSubject = new CartSubject();
+            cartSubject.subscribe(new CartCounterObserver());
+            cartSubject.subscribe(new PriceCalculatorObserver());
+            
+            // Имитация изменения корзины
+            setTimeout(() => {
+                console.log('Simulating cart change...');
+                cartSubject.notify({ itemId: 1, quantity: 2 });
+            }, 1000);
+            
+            alert('Observer Pattern demo запущен. Смотрите консоль браузера.');
+        });
+        
+        // Facade Pattern Demo
+        document.getElementById('demo-facade')?.addEventListener('click', function() {
+            console.log('=== Facade Pattern Demo ===');
+            
+            // Имитация работы Facade
+            alert('Facade Pattern: Весь процесс покупки (проверка товара, создание заказа, оплата, уведомления) выполняется через один метод purchase_product()');
+            
+            // В реальном приложении здесь был бы вызов API
+            fetch('/api/purchase', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-Token': AppConfig.csrfToken
+                },
+                body: JSON.stringify({
+                    user_id: AppConfig.userId || 1,
+                    product_id: 1,
+                    quantity: 1,
+                    payment_method: 'credit_card'
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(`Заказ создан через Facade!\nНомер заказа: ${data.data.order_number}`);
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            })
+            .catch(error => {
+                console.error('Facade demo error:', error);
+                alert('Демо выполнено (без реального запроса)');
+            });
+        });
+        
+        // Обработка изменения количества
+        document.querySelectorAll('.quantity-input').forEach(input => {
+            input.addEventListener('change', function() {
+                const itemId = this.dataset.itemId;
+                const productId = this.dataset.productId;
+                const quantity = parseInt(this.value);
+                
+                updateCartItem(itemId, productId, quantity);
+            });
+        });
+        
+        // Увеличение количества
+        document.querySelectorAll('.increase-quantity').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const productId = this.dataset.productId;
+                const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
+                
+                if (input) {
+                    let quantity = parseInt(input.value) + 1;
+                    input.value = quantity;
+                    updateCartItem(itemId, productId, quantity);
+                }
+            });
+        });
+        
+        // Уменьшение количества
+        document.querySelectorAll('.decrease-quantity').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const productId = this.dataset.productId;
+                const input = document.querySelector(`.quantity-input[data-item-id="${itemId}"]`);
+                
+                if (input) {
+                    let quantity = parseInt(input.value) - 1;
+                    if (quantity < 1) quantity = 1;
+                    input.value = quantity;
+                    updateCartItem(itemId, productId, quantity);
+                }
+            });
+        });
+        
+        // Удаление товара
+        document.querySelectorAll('.remove-item').forEach(button => {
+            button.addEventListener('click', function() {
+                const itemId = this.dataset.itemId;
+                const productName = this.dataset.productName;
+                
+                if (confirm(`Удалить "${productName}" из корзины?`)) {
+                    removeCartItem(itemId);
+                }
+            });
+        });
+        
+        // Очистка корзины
+        document.getElementById('clear-cart')?.addEventListener('click', function() {
+            if (confirm('Очистить всю корзину?')) {
+                clearCart();
+            }
+        });
+        
+        // Strategy Pattern - изменение способа оплаты
+        document.getElementById('payment-method')?.addEventListener('change', function() {
+            const method = this.value;
+            
+            // Скрываем все формы оплаты
+            document.querySelectorAll('.payment-form').forEach(form => {
+                form.style.display = 'none';
+            });
+            
+            // Показываем нужную форму
+            const formId = method + '-form';
+            const form = document.getElementById(formId);
+            if (form) {
+                form.style.display = 'block';
+            }
+            
+            console.log('Strategy Pattern: Выбрана стратегия оплаты:', method);
+        });
+        
+        // Оформление заказа
+        document.getElementById('checkout-btn')?.addEventListener('click', function() {
+            const paymentMethod = document.getElementById('payment-method').value;
+            
+            // Проверка формы оплаты для кредитной карты
+            if (paymentMethod === 'credit_card') {
+                const cardNumber = document.getElementById('card-number').value;
+                const cardExpiry = document.getElementById('card-expiry').value;
+                const cardCvv = document.getElementById('card-cvv').value;
+                
+                if (!cardNumber || !cardExpiry || !cardCvv) {
+                    alert('Заполните все поля кредитной карты');
+                    return;
+                }
+            }
+            
+            // В реальном приложении здесь был бы переход к оформлению
+            alert(`Заказ оформлен! Способ оплаты: ${paymentMethod}\n\nВ реальном приложении здесь был бы переход на страницу подтверждения заказа.`);
+            
+            // Имитация создания заказа
+            simulateOrderCreation(paymentMethod);
+        });
+        
+        // Вспомогательные функции
+        async function updateCartItem(itemId, productId, quantity) {
+            try {
+                const response = await fetch(`/cart/items/${itemId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': AppConfig.csrfToken
+                    },
+                    body: JSON.stringify({ quantity: quantity })
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Обновляем сумму в таблице
+                    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+                    if (row) {
+                        const subtotalElement = row.querySelector('.item-subtotal');
+                        if (subtotalElement) {
+                            subtotalElement.textContent = formatPrice(data.data.subtotal);
+                        }
+                    }
+                    
+                    // Обновляем итоговую сумму
+                    updateOrderSummary(data.data.cart_total);
+                    
+                    showNotification('Количество обновлено', 'success');
+                } else {
+                    showNotification('Ошибка: ' + data.error, 'error');
+                }
+            } catch (error) {
+                console.error('Update error:', error);
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+        
+        async function removeCartItem(itemId) {
+            try {
+                const response = await fetch(`/cart/items/${itemId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-Token': AppConfig.csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    // Удаляем строку из таблицы
+                    const row = document.querySelector(`tr[data-item-id="${itemId}"]`);
+                    if (row) {
+                        row.remove();
+                    }
+                    
+                    // Обновляем итоговую сумму
+                    updateOrderSummary(data.data.cart_total);
+                    
+                    // Если корзина пуста, перезагружаем страницу
+                    if (data.data.item_count === 0) {
+                        location.reload();
+                    }
+                    
+                    showNotification('Товар удален из корзины', 'success');
+                }
+            } catch (error) {
+                console.error('Remove error:', error);
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+        
+        async function clearCart() {
+            try {
+                const response = await fetch(`/cart/{{ cart.id }}/clear`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRF-Token': AppConfig.csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    location.reload();
+                }
+            } catch (error) {
+                console.error('Clear error:', error);
+                showNotification('Ошибка соединения', 'error');
+            }
+        }
+        
+        function updateOrderSummary(total) {
+            const subtotalElement = document.getElementById('subtotal');
+            const orderTotalElement = document.getElementById('order-total');
+            const taxElement = document.getElementById('tax');
+            
+            if (subtotalElement && orderTotalElement && taxElement) {
+                const tax = total * 0.2;
+                const orderTotal = total + tax;
+                
+                subtotalElement.textContent = formatPrice(total);
+                taxElement.textContent = formatPrice(tax);
+                orderTotalElement.textContent = formatPrice(orderTotal);
+            }
+        }
+        
+        function formatPrice(price) {
+            return new Intl.NumberFormat('ru-RU', {
+                style: 'currency',
+                currency: 'RUB',
+                minimumFractionDigits: 0
+            }).format(price);
+        }
+        
+        function showNotification(message, type) {
+            // Используем функцию из main.js
+            if (typeof window.showNotification === 'function') {
+                window.showNotification(message, type);
+            } else {
+                alert(message);
+            }
+        }
+        
+        function simulateOrderCreation(paymentMethod) {
+            console.log('Simulating order creation with payment method:', paymentMethod);
+            
+            // Имитация Strategy Pattern
+            const paymentStrategies = {
+                'credit_card': () => 'Оплата кредитной картой обработана',
+                'paypal': () => 'Перенаправление на PayPal',
+                'crypto': () => 'Ожидание подтверждения криптовалютной транзакции'
+            };
+            
+            const strategy = paymentStrategies[paymentMethod];
+            if (strategy) {
+                const message = strategy();
+                console.log('Strategy result:', message);
+            }
+        }
+    });
+</script>
+{% endblock %}

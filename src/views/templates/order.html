@@ -1,0 +1,626 @@
+{% extends "base.html" %}
+
+{% block title %}Заказ #{{ order.id }} - Онлайн-магазин{% endblock %}
+
+{% block content %}
+<div class="order-page">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>
+            <i class="fas fa-receipt"></i> Заказ #{{ order.order_number }}
+        </h1>
+        <div>
+            <span class="badge bg-{{ 
+                'secondary' if order.status == 'pending' else
+                'primary' if order.status == 'paid' else
+                'info' if order.status == 'shipped' else
+                'success' if order.status == 'delivered' else
+                'danger' if order.status == 'cancelled' else
+                'warning'
+            }} fs-6">
+                {{ order.status|upper }}
+            </span>
+        </div>
+    </div>
+    
+    <!-- Информация о заказе -->
+    <div class="row">
+        <div class="col-lg-8">
+            <!-- Детали заказа -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-boxes"></i> Состав заказа
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table">
+                            <thead>
+                                <tr>
+                                    <th>Товар</th>
+                                    <th class="text-center">Цена</th>
+                                    <th class="text-center">Количество</th>
+                                    <th class="text-end">Сумма</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in order.items %}
+                                <tr>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            {% if item.product.image_url %}
+                                            <img src="{{ item.product.image_url }}" 
+                                                 alt="{{ item.product.name }}" 
+                                                 class="img-thumbnail me-3" 
+                                                 style="width: 50px; height: 50px; object-fit: cover;">
+                                            {% else %}
+                                            <div class="img-thumbnail me-3 d-flex align-items-center justify-content-center" 
+                                                 style="width: 50px; height: 50px; background: #f8f9fa;">
+                                                <i class="fas fa-box text-muted"></i>
+                                            </div>
+                                            {% endif %}
+                                            <div>
+                                                <h6 class="mb-0">{{ item.product.name }}</h6>
+                                                <small class="text-muted">{{ item.product.category }}</small>
+                                                <br>
+                                                <small>Артикул: {{ item.product.sku or 'N/A' }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="text-center">
+                                        {{ helpers.format_price(item.price, 'RUB') }}
+                                    </td>
+                                    <td class="text-center">
+                                        {{ item.quantity }}
+                                    </td>
+                                    <td class="text-end fw-bold">
+                                        {{ helpers.format_price(item.get_subtotal(), 'RUB') }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr>
+                                    <td colspan="3" class="text-end">Товары:</td>
+                                    <td class="text-end">{{ helpers.format_price(order.total_amount, 'RUB') }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end">Доставка:</td>
+                                    <td class="text-end">{{ helpers.format_price(0, 'RUB') }}</td>
+                                </tr>
+                                <tr>
+                                    <td colspan="3" class="text-end">Налог (20%):</td>
+                                    <td class="text-end">{{ helpers.format_price(order.total_amount * 0.2, 'RUB') }}</td>
+                                </tr>
+                                <tr class="table-active">
+                                    <td colspan="3" class="text-end fw-bold">Итого:</td>
+                                    <td class="text-end fw-bold fs-5">
+                                        {{ helpers.format_price(order.total_amount * 1.2, 'RUB') }}
+                                    </td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- История статусов -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-history"></i> История заказа
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        <div class="timeline-item {% if order.status == 'delivered' %}active{% endif %}">
+                            <div class="timeline-marker">
+                                <i class="fas fa-check-circle"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Доставлен</h6>
+                                <small class="text-muted">
+                                    {% if order.status == 'delivered' %}
+                                    {{ order.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                                    {% else %}
+                                    Ожидается
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if order.status in ['shipped', 'delivered'] %}active{% endif %}">
+                            <div class="timeline-marker">
+                                <i class="fas fa-shipping-fast"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Отправлен</h6>
+                                <small class="text-muted">
+                                    {% if order.tracking_number %}
+                                    Трек-номер: {{ order.tracking_number }}
+                                    {% elif order.status in ['shipped', 'delivered'] %}
+                                    {{ order.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                                    {% else %}
+                                    Готовится к отправке
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="timeline-item {% if order.status in ['paid', 'shipped', 'delivered'] %}active{% endif %}">
+                            <div class="timeline-marker">
+                                <i class="fas fa-credit-card"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Оплачен</h6>
+                                <small class="text-muted">
+                                    {% if order.payment_status == 'paid' %}
+                                    {{ order.updated_at.strftime('%d.%m.%Y %H:%M') }}
+                                    Способ оплаты: {{ order.payment_method }}
+                                    {% else %}
+                                    Ожидается оплата
+                                    {% endif %}
+                                </small>
+                            </div>
+                        </div>
+                        <div class="timeline-item active">
+                            <div class="timeline-marker">
+                                <i class="fas fa-shopping-cart"></i>
+                            </div>
+                            <div class="timeline-content">
+                                <h6>Заказ создан</h6>
+                                <small class="text-muted">
+                                    {{ order.created_at.strftime('%d.%m.%Y %H:%M') }}
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-lg-4">
+            <!-- Информация о доставке -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-truck"></i> Информация о доставке
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if order.shipping_address %}
+                    <div class="shipping-address">
+                        <h6>Адрес доставки:</h6>
+                        <p class="text-muted">{{ order.shipping_address|replace('\n', '<br>')|safe }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if order.billing_address %}
+                    <div class="billing-address mt-3">
+                        <h6>Платежный адрес:</h6>
+                        <p class="text-muted">{{ order.billing_address|replace('\n', '<br>')|safe }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    <hr>
+                    
+                    <div class="contact-info">
+                        <h6>Контактная информация:</h6>
+                        <ul class="list-unstyled text-muted">
+                            <li>
+                                <i class="fas fa-user me-2"></i>
+                                {{ order.user.username }}
+                            </li>
+                            <li>
+                                <i class="fas fa-envelope me-2"></i>
+                                {{ order.user.email }}
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Действия с заказом -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">
+                        <i class="fas fa-cogs"></i> Действия
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        {% if order.status == 'pending' %}
+                        <button class="btn btn-primary" id="pay-order-btn">
+                            <i class="fas fa-credit-card"></i> Оплатить заказ
+                        </button>
+                        {% endif %}
+                        
+                        {% if order.status in ['pending', 'paid'] %}
+                        <button class="btn btn-warning" id="cancel-order-btn" 
+                                data-order-id="{{ order.id }}">
+                            <i class="fas fa-times-circle"></i> Отменить заказ
+                        </button>
+                        {% endif %}
+                        
+                        {% if order.status == 'delivered' %}
+                        <button class="btn btn-info" id="return-order-btn">
+                            <i class="fas fa-undo"></i> Вернуть товар
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{{ url_for('get_orders') }}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left"></i> К списку заказов
+                        </a>
+                        
+                        <button class="btn btn-outline-info" id="print-order-btn">
+                            <i class="fas fa-print"></i> Распечатать заказ
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Observer Pattern Demo -->
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="mb-0">
+                        <i class="fas fa-bell"></i> Observer Pattern - Уведомления
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">
+                        Паттерн Observer используется для отправки уведомлений о 
+                        изменении статуса заказа всем подписчикам.
+                    </p>
+                    
+                    <div class="notification-demo">
+                        <div class="mb-3">
+                            <label class="form-label">Изменить статус заказа:</label>
+                            <select class="form-select" id="status-select">
+                                <option value="paid">Оплачен</option>
+                                <option value="shipped">Отправлен</option>
+                                <option value="delivered">Доставлен</option>
+                                <option value="cancelled">Отменен</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-success w-100" id="demo-observer-btn">
+                            <i class="fas fa-paper-plane"></i> Отправить уведомления
+                        </button>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                Подписчики (Observers):
+                                <ul class="list-unstyled mt-1">
+                                    <li><i class="fas fa-envelope text-primary"></i> EmailNotifier</li>
+                                    <li><i class="fas fa-sms text-info"></i> SMSNotifier</li>
+                                    <li><i class="fas fa-bell text-warning"></i> PushNotifier</li>
+                                </ul>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Adapter Pattern Demo -->
+    <div class="card mt-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">
+                <i class="fas fa-exchange-alt"></i> Adapter Pattern - Интеграция со службами доставки
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p class="card-text">
+                        Паттерн Adapter позволяет работать с разными службами доставки 
+                        через единый интерфейс, даже если их API несовместимы.
+                    </p>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Выберите службу доставки:</label>
+                        <select class="form-select" id="shipping-service">
+                            <option value="fedex">FedEx</option>
+                            <option value="ups">UPS</option>
+                            <option value="dhl">DHL</option>
+                        </select>
+                    </div>
+                    
+                    <button class="btn btn-primary" id="demo-adapter-btn">
+                        <i class="fas fa-calculator"></i> Рассчитать доставку
+                    </button>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="result-area p-3 bg-light rounded">
+                        <h6>Результат расчета:</h6>
+                        <div id="shipping-result">
+                            <p class="text-muted">Выберите службу доставки и нажмите "Рассчитать"</p>
+                        </div>
+                        
+                        <div class="mt-3">
+                            <small class="text-muted">
+                                <i class="fas fa-info-circle"></i>
+                                Adapter преобразует вызовы к единому интерфейсу:
+                                <code>calculate_shipping(address, weight, dimensions)</code>
+                            </small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const orderId = {{ order.id }};
+        
+        // Оплата заказа
+        document.getElementById('pay-order-btn')?.addEventListener('click', function() {
+            if (confirm('Перейти к оплате заказа?')) {
+                window.location.href = `/orders/${orderId}/payment`;
+            }
+        });
+        
+        // Отмена заказа
+        document.getElementById('cancel-order-btn')?.addEventListener('click', function() {
+            if (confirm('Вы уверены, что хотите отменить заказ?')) {
+                cancelOrder(orderId);
+            }
+        });
+        
+        // Возврат товара
+        document.getElementById('return-order-btn')?.addEventListener('click', function() {
+            alert('Для возврата товара обратитесь в службу поддержки');
+        });
+        
+        // Печать заказа
+        document.getElementById('print-order-btn')?.addEventListener('click', function() {
+            window.print();
+        });
+        
+        // Observer Pattern Demo
+        document.getElementById('demo-observer-btn')?.addEventListener('click', function() {
+            const newStatus = document.getElementById('status-select').value;
+            
+            console.log('=== Observer Pattern Demo ===');
+            
+            // Создаем Subject (заказ)
+            class OrderSubject {
+                constructor() {
+                    this.observers = [];
+                    this.status = 'pending';
+                }
+                
+                subscribe(observer) {
+                    this.observers.push(observer);
+                    console.log(`Observer ${observer.name} subscribed`);
+                }
+                
+                setStatus(newStatus) {
+                    console.log(`Changing status from ${this.status} to ${newStatus}`);
+                    this.status = newStatus;
+                    this.notify();
+                }
+                
+                notify() {
+                    console.log(`Notifying ${this.observers.length} observers about status change`);
+                    this.observers.forEach(observer => {
+                        observer.update(this.status, orderId);
+                    });
+                }
+            }
+            
+            // Создаем Observers
+            class EmailNotifier {
+                get name() { return 'EmailNotifier'; }
+                
+                update(status, orderId) {
+                    console.log(`[EmailNotifier] Sending email: Order ${orderId} status changed to ${status}`);
+                    // В реальном приложении здесь отправлялся бы email
+                }
+            }
+            
+            class SMSNotifier {
+                get name() { return 'SMSNotifier'; }
+                
+                update(status, orderId) {
+                    console.log(`[SMSNotifier] Sending SMS: Order ${orderId} status changed to ${status}`);
+                    // В реальном приложении здесь отправлялось бы SMS
+                }
+            }
+            
+            class PushNotifier {
+                get name() { return 'PushNotifier'; }
+                
+                update(status, orderId) {
+                    console.log(`[PushNotifier] Sending push: Order ${orderId} status changed to ${status}`);
+                    // В реальном приложении здесь отправлялось бы push-уведомление
+                }
+            }
+            
+            // Демонстрация
+            const order = new OrderSubject();
+            order.subscribe(new EmailNotifier());
+            order.subscribe(new SMSNotifier());
+            order.subscribe(new PushNotifier());
+            
+            // Имитация изменения статуса
+            order.setStatus(newStatus);
+            
+            alert(`Observer Pattern: Уведомления отправлены для статуса "${newStatus}".\nСмотрите консоль браузера.`);
+        });
+        
+        // Adapter Pattern Demo
+        document.getElementById('demo-adapter-btn')?.addEventListener('click', function() {
+            const service = document.getElementById('shipping-service').value;
+            
+            console.log('=== Adapter Pattern Demo ===');
+            
+            // Имитация разных интерфейсов служб доставки
+            const shippingServices = {
+                fedex: {
+                    calculateCost: function(address, weight, size) {
+                        return {
+                            carrier: 'FedEx',
+                            cost: 12.99,
+                            days: 3,
+                            service: 'Express'
+                        };
+                    }
+                },
+                
+                ups: {
+                    getShippingRate: function(to, weightKg, dimensions) {
+                        return {
+                            service: 'UPS Ground',
+                            price: 8.99,
+                            delivery: '2 business days'
+                        };
+                    }
+                },
+                
+                dhl: {
+                    estimateDelivery: function(destination, packageInfo) {
+                        return {
+                            provider: 'DHL',
+                            amount: 15.50,
+                            estimatedDelivery: '1-2 days'
+                        };
+                    }
+                }
+            };
+            
+            // Adapter для унификации интерфейса
+            class ShippingAdapter {
+                constructor(service) {
+                    this.service = service;
+                }
+                
+                calculateShipping(address, weight, dimensions) {
+                    if (this.service.calculateCost) {
+                        // FedEx-style interface
+                        return this.service.calculateCost(address, weight, dimensions);
+                    } else if (this.service.getShippingRate) {
+                        // UPS-style interface
+                        return this.service.getShippingRate(address, weight, dimensions);
+                    } else if (this.service.estimateDelivery) {
+                        // DHL-style interface
+                        return this.service.estimateDelivery(address, {
+                            weight: weight,
+                            dimensions: dimensions
+                        });
+                    } else {
+                        throw new Error('Unsupported shipping service interface');
+                    }
+                }
+            }
+            
+            // Использование Adapter
+            const selectedService = shippingServices[service];
+            const adapter = new ShippingAdapter(selectedService);
+            
+            try {
+                const result = adapter.calculateShipping(
+                    'Moscow, Russia',
+                    2.5,
+                    '30x20x15 cm'
+                );
+                
+                console.log('Shipping calculation result:', result);
+                
+                // Отображение результата
+                const resultDiv = document.getElementById('shipping-result');
+                resultDiv.innerHTML = `
+                    <div class="alert alert-info">
+                        <h6>${result.carrier || result.service || result.provider}</h6>
+                        <p class="mb-1"><strong>Стоимость:</strong> $${result.cost || result.price || result.amount}</p>
+                        <p class="mb-0"><strong>Срок доставки:</strong> ${result.days || result.delivery || result.estimatedDelivery}</p>
+                    </div>
+                    <small class="text-muted">
+                        <i class="fas fa-check text-success"></i>
+                        Adapter успешно преобразовал вызов к единому интерфейсу
+                    </small>
+                `;
+                
+            } catch (error) {
+                console.error('Adapter error:', error);
+                document.getElementById('shipping-result').innerHTML = `
+                    <div class="alert alert-danger">
+                        Ошибка: ${error.message}
+                    </div>
+                `;
+            }
+        });
+        
+        // Вспомогательные функции
+        async function cancelOrder(orderId) {
+            try {
+                const response = await fetch(`/orders/${orderId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'X-CSRF-Token': AppConfig.csrfToken
+                    }
+                });
+                
+                const data = await response.json();
+                
+                if (data.success) {
+                    alert('Заказ отменен');
+                    window.location.reload();
+                } else {
+                    alert('Ошибка: ' + data.error);
+                }
+            } catch (error) {
+                console.error('Cancel error:', error);
+                alert('Ошибка соединения');
+            }
+        }
+    });
+</script>
+
+<style>
+    .timeline {
+        position: relative;
+        padding-left: 30px;
+    }
+    
+    .timeline::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #dee2e6;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 20px;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -30px;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: #6c757d;
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .timeline-item.active .timeline-marker {
+        background: #0d6efd;
+    }
+    
+    .timeline-content {
+        padding-left: 20px;
+    }
+</style>
+{% endblock %}
